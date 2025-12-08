@@ -3,6 +3,7 @@ from typing import Dict, List, Any, Optional
 import networkx as nx
 from loguru import logger
 
+from analyzers_baseline.config import SettingsLoader
 from analyzers_baseline.patterns.base_detector import BasePatternDetector
 from analyzers_baseline.patterns.detectors import (
     CycleDetector,
@@ -20,12 +21,12 @@ class StructuralPatternAnalyzer:
 
     def __init__(
         self,
+        settings_loader: SettingsLoader,
+        network: str,
         detectors: Optional[List[BasePatternDetector]] = None,
-        config: Optional[Dict[str, Any]] = None,
-        network: Optional[str] = None
     ):
-        self.config = config or self._get_default_config()
         self.network = network
+        self.config = settings_loader.load(network)
         
         if detectors is None:
             self.detectors = self._create_default_detectors()
@@ -33,69 +34,8 @@ class StructuralPatternAnalyzer:
             self.detectors = detectors
         
         logger.info(
-            f"Initialized StructuralPatternAnalyzer with {len(self.detectors)} detectors"
+            f"Initialized StructuralPatternAnalyzer with {len(self.detectors)} detectors for {network}"
         )
-
-    def _get_default_config(self) -> Dict[str, Any]:
-        return {
-            "cycle_detection": {
-                "min_cycle_length": 3,
-                "max_cycle_length": 10,
-                "max_cycles_per_scc": 100,
-            },
-            "path_analysis": {
-                "min_path_length": 3,
-                "max_path_length": 10,
-                "max_paths_to_check": 1000,
-                "high_volume_percentile": 90,
-                "max_source_nodes": 50,
-                "max_target_nodes": 50,
-                "layering_min_volume": 1000,
-                "layering_cv_threshold": 0.5,
-            },
-            "scc_analysis": {
-                "min_scc_size": 5,
-            },
-            "network_analysis": {
-                "min_community_size": 5,
-                "max_community_size": 100,
-                "small_transaction_threshold": 1000,
-                "small_transaction_ratio_threshold": 0.7,
-                "density_threshold": 0.1,
-            },
-            "sybil_detection": {
-                "min_network_size": 10,
-                "similarity_threshold": 0.8,
-            },
-            "proximity_analysis": {
-                "max_distance": 3,
-                "distance_decay_factor": 1.0,
-            },
-            "risk_identification": {
-                "high_volume_threshold": 100000,
-                "high_degree_threshold": 50,
-            },
-            "motif_detection": {
-                "degree_percentile_threshold": 90,
-                "fanin_max_out_degree": 3,
-                "fanout_max_in_degree": 3,
-                "min_spoke_count": 5,
-            },
-            "burst_detection": {
-                "min_burst_intensity": 3.0,
-                "min_burst_transactions": 10,
-                "time_window_seconds": 3600,
-                "z_score_threshold": 2.0,
-            },
-            "threshold_detection": {
-                "reporting_threshold_usd": 10000,
-                "min_transactions_near_threshold": 5,
-                "clustering_score_threshold": 0.7,
-                "size_consistency_threshold": 0.8,
-                "near_threshold_lower_pct": 0.80,
-                "near_threshold_upper_pct": 0.99,
-            },
-        }
 
     def _create_default_detectors(self) -> List[BasePatternDetector]:
         return [
@@ -177,7 +117,7 @@ class StructuralPatternAnalyzer:
             detector_name = detector.__class__.__name__
             
             try:
-                logger.debug(f"Running {detector_name}")
+                logger.info(f"Running {detector_name}")
                 
                 patterns = detector.detect(
                     G=graph,

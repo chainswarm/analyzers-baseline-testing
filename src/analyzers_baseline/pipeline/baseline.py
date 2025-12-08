@@ -6,6 +6,7 @@ from loguru import logger
 from ..adapters.parquet import ParquetAdapter
 from ..adapters.clickhouse import ClickHouseAdapter
 from ..aggregates.transfer_aggregates import compute_transfer_aggregates
+from ..config import SettingsLoader
 from ..features.address_feature_analyzer import AddressFeatureAnalyzer
 from ..patterns.structural_pattern_analyzer import StructuralPatternAnalyzer
 from ..graph.builder import build_money_flow_graph, extract_addresses_from_flows
@@ -38,10 +39,12 @@ class BaselineAnalyzersPipeline:
         adapter: Union[ParquetAdapter, ClickHouseAdapter],
         feature_analyzer: FeatureAnalyzerProtocol,
         pattern_analyzer: PatternAnalyzerProtocol,
+        network: str,
     ):
         self.adapter = adapter
         self.feature_analyzer = feature_analyzer
         self.pattern_analyzer = pattern_analyzer
+        self.network = network
     
     def run(
         self,
@@ -49,7 +52,6 @@ class BaselineAnalyzersPipeline:
         end_timestamp_ms: int,
         window_days: int,
         processing_date: str,
-        network: str = "unknown",
         run_features: bool = True,
         run_patterns: bool = True,
     ) -> Dict[str, Any]:
@@ -57,7 +59,7 @@ class BaselineAnalyzersPipeline:
         
         logger.info(
             f"Starting pipeline: window_days={window_days}, "
-            f"processing_date={processing_date}, network={network}"
+            f"processing_date={processing_date}, network={self.network}"
         )
         logger.info(
             f"Time range: {start_timestamp_ms} to {end_timestamp_ms}"
@@ -104,7 +106,6 @@ class BaselineAnalyzersPipeline:
                 processing_date=processing_date,
             )
         
-        # Run pattern analysis
         if run_patterns:
             patterns_count = self._run_pattern_analysis(
                 money_flows=money_flows,
@@ -132,14 +133,12 @@ class BaselineAnalyzersPipeline:
         end_timestamp_ms: int,
         window_days: int,
         processing_date: str,
-        network: str = "unknown",
     ) -> int:
         result = self.run(
             start_timestamp_ms=start_timestamp_ms,
             end_timestamp_ms=end_timestamp_ms,
             window_days=window_days,
             processing_date=processing_date,
-            network=network,
             run_features=True,
             run_patterns=False,
         )
@@ -151,14 +150,12 @@ class BaselineAnalyzersPipeline:
         end_timestamp_ms: int,
         window_days: int,
         processing_date: str,
-        network: str = "unknown",
     ) -> int:
         result = self.run(
             start_timestamp_ms=start_timestamp_ms,
             end_timestamp_ms=end_timestamp_ms,
             window_days=window_days,
             processing_date=processing_date,
-            network=network,
             run_features=False,
             run_patterns=True,
         )
@@ -178,7 +175,6 @@ class BaselineAnalyzersPipeline:
             graph, address_labels, transfer_aggregates
         )
         
-        # Convert dict-of-dicts to list for adapter
         features_list = list(features_dict.values())
         
         if not features_list:
@@ -203,7 +199,6 @@ class BaselineAnalyzersPipeline:
     ) -> int:
         logger.info("Running pattern analysis...")
         
-        # Detect patterns
         patterns = self.pattern_analyzer.analyze(
             money_flows=money_flows,
             address_labels=address_labels,
@@ -227,11 +222,18 @@ class BaselineAnalyzersPipeline:
 
 def create_pipeline(
     adapter: Union[ParquetAdapter, ClickHouseAdapter],
-    feature_analyzer: FeatureAnalyzerProtocol = None,
-    pattern_analyzer: PatternAnalyzerProtocol = None,
+    network: str,
+    settings_loader: SettingsLoader,
 ) -> BaselineAnalyzersPipeline:
+    feature_analyzer = AddressFeatureAnalyzer()
+    pattern_analyzer = StructuralPatternAnalyzer(
+        settings_loader=settings_loader,
+        network=network
+    )
+    
     return BaselineAnalyzersPipeline(
         adapter=adapter,
-        feature_analyzer=feature_analyzer or AddressFeatureAnalyzer(),
-        pattern_analyzer=pattern_analyzer or StructuralPatternAnalyzer(),
+        feature_analyzer=feature_analyzer,
+        pattern_analyzer=pattern_analyzer,
+        network=network,
     )

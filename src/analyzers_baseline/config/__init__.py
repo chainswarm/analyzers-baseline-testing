@@ -1,8 +1,3 @@
-"""Configuration module.
+from analyzers_baseline.config.settings_loader import SettingsLoader
 
-This module will contain configuration management:
-- settings.py: Pydantic settings
-- defaults/structural_patterns.json: Default pattern configuration
-
-Implementation coming in Phase 2.
-"""
+__all__ = ["SettingsLoader"]

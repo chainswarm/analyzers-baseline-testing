@@ -5,7 +5,6 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
-# Add project root to python path and change working directory
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 sys.path.insert(0, project_root)
 os.chdir(project_root)
@@ -15,6 +14,7 @@ from loguru import logger
 from chainswarm_core.observability import setup_logger
 
 from analyzers_baseline.adapters.parquet import ParquetAdapter
+from analyzers_baseline.config import SettingsLoader
 from analyzers_baseline.pipeline import create_pipeline
 
 
@@ -158,19 +158,24 @@ def main():
         f"({start_timestamp_ms} to {end_timestamp_ms})"
     )
     
+    settings_loader = SettingsLoader()
+    
     if args.clickhouse:
         adapter = _create_clickhouse_adapter(args, network)
     else:
         adapter = _create_parquet_adapter(args)
     
-    pipeline = create_pipeline(adapter=adapter)
+    pipeline = create_pipeline(
+        adapter=adapter,
+        network=network,
+        settings_loader=settings_loader,
+    )
     
     result = pipeline.run(
         start_timestamp_ms=start_timestamp_ms,
         end_timestamp_ms=end_timestamp_ms,
         window_days=window_days,
         processing_date=processing_date,
-        network=network,
         run_features=run_features,
         run_patterns=run_patterns,
     )

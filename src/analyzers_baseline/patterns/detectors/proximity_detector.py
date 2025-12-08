@@ -47,7 +47,7 @@ class ProximityDetector(BasePatternDetector):
         if not risk_addresses:
             return []
         
-        logger.debug(f"Analyzing proximity to {len(risk_addresses)} risk addresses")
+        logger.info(f"Analyzing proximity to {len(risk_addresses)} risk addresses")
         
         for risk_addr in risk_addresses:
             G_undirected = G.to_undirected()
