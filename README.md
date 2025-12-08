@@ -1,4 +1,7 @@
-# Analyzers-Baseline
+# ChainSwarm Analyzers Baseline
+
+[![PyPI version](https://badge.fury.io/py/chainswarm-analyzers-baseline.svg)](https://pypi.org/project/chainswarm-analyzers-baseline/)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 **Baseline analytics algorithms for blockchain pattern detection and feature engineering.**
 
@@ -6,51 +9,22 @@ This package provides the official baseline implementation for the ChainSwarm An
 
 ## Overview
 
-`analyzers-baseline` extracts core analytical algorithms from `analytics-pipeline/packages/analyzers/` and provides:
+`chainswarm-analyzers-baseline` extracts core analytical algorithms from `analytics-pipeline/packages/analyzers/` and provides:
 
 1. **Feature Computation** - 70+ features per address including volume, graph, temporal, and behavioral metrics
 2. **Pattern Detection** - 7 pattern types: cycles, layering paths, smurfing networks, motifs, proximity risk, temporal bursts, and threshold evasion
 
-## Documentation
-
-For detailed architecture and implementation details, see:
-- [**ARCHITECTURE.md**](docs/ARCHITECTURE.md) - Full architecture documentation
-
 ## Installation
 
-### Using UV (Recommended)
-
-[UV](https://docs.astral.sh/uv/) is a fast Python package manager written in Rust.
-
 ```bash
-# Install uv if you haven't
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Create a new virtual environment with Python 3.13
-cd analyzers-baseline
-uv venv --python 3.13
-
-# Activate the virtual environment
-# Linux/macOS:
-source .venv/bin/activate
-# Windows:
-.venv\Scripts\activate
-
-# Install the package with all dependencies
-uv pip install -e .
-
-# For development (includes pytest)
-uv pip install -e ".[dev]"
+pip install chainswarm-analyzers-baseline
 ```
 
-### Using pip
+### From Source
 
 ```bash
-# Basic installation (includes ClickHouse support via chainswarm-core)
-pip install analyzers-baseline
-
-# For development
-pip install -e ".[dev]"
+cd analyzers-baseline
+pip install -e .
 ```
 
 ## Quick Start
@@ -59,8 +33,8 @@ pip install -e ".[dev]"
 
 ```python
 from chainswarm_core.db import ClientFactory, get_connection_params
-from analyzers_baseline import BaselineAnalyzersPipeline
-from analyzers_baseline.adapters import ClickHouseAdapter
+from chainswarm_analyzers_baseline import BaselineAnalyzersPipeline
+from chainswarm_analyzers_baseline.adapters import ClickHouseAdapter
 
 # Get connection params from environment (uses CLICKHOUSE_* env vars)
 connection_params = get_connection_params(
@@ -89,8 +63,8 @@ result = pipeline.run(
 ### Tournament Testing (Parquet)
 
 ```python
-from analyzers_baseline import BaselineAnalyzersPipeline
-from analyzers_baseline.adapters import ParquetAdapter
+from chainswarm_analyzers_baseline import BaselineAnalyzersPipeline
+from chainswarm_analyzers_baseline.adapters import ParquetAdapter
 
 # Create adapter with file paths
 adapter = ParquetAdapter(
@@ -146,7 +120,7 @@ run-patterns --input data/input/torus/2025-01-15/30
 ## Package Structure
 
 ```
-analyzers_baseline/
+chainswarm_analyzers_baseline/
 ├── protocols/      # Abstract interfaces (Python Protocols)
 ├── features/       # Feature computation implementations
 ├── patterns/       # Pattern detection implementations
@@ -176,16 +150,6 @@ data/
     └── ...
 ```
 
-Example:
-```
-data/
-├── input/torus/2025-01-15/30/
-│   └── transfers.parquet
-└── output/torus/2025-01-15/30/
-    ├── features_w30.parquet
-    └── patterns_*.parquet
-```
-
 ## Data Schemas
 
 All data schemas match `data-pipeline` core tables for compatibility.
@@ -210,40 +174,6 @@ Balance transfer data matching `core_transfers` schema:
 | `amount_usd` | Decimal128(18) | USD value at transaction time |
 | `fee` | Decimal128(18) | Transaction fee |
 
-#### assets.parquet
-Asset metadata matching `core_assets` schema:
-
-| Column | Type | Description |
-|--------|------|-------------|
-| `asset_symbol` | String | Asset symbol |
-| `asset_contract` | String | Contract address or 'native' |
-| `network` | String | Network name (torus, bittensor, etc.) |
-| `verified` | Boolean | Verification status |
-| `verification_source` | String | Source of verification |
-| `first_seen_timestamp` | UInt64 | Discovery timestamp |
-
-#### asset_prices.parquet
-Historical USD prices matching `core_asset_prices` schema:
-
-| Column | Type | Description |
-|--------|------|-------------|
-| `asset_symbol` | String | Asset symbol |
-| `asset_contract` | String | Contract address or 'native' |
-| `price_date` | Date32 | Price date |
-| `price_usd` | Decimal128(18) | USD price |
-| `source` | String | Price source |
-
-#### address_labels.parquet
-Known address labels matching `core_address_labels` schema:
-
-| Column | Type | Description |
-|--------|------|-------------|
-| `address` | String | Blockchain address |
-| `label` | String | Human-readable label |
-| `address_type` | String | Type classification |
-| `trust_level` | String | Trust level |
-| `source` | String | Label source |
-
 ### Output Files
 
 | File | Description |
@@ -256,19 +186,6 @@ Known address labels matching `core_address_labels` schema:
 | `patterns_motif.parquet` | Fan-in/fan-out motif patterns |
 | `patterns_burst.parquet` | Temporal burst patterns |
 | `patterns_threshold.parquet` | Threshold evasion patterns |
-
-### S3 Export Compatibility
-
-Input files are compatible with `chain-synthetics` S3 exports:
-```
-s3://bucket/snapshots/{network}/{processing_date}/{window_days}/
-├── transfers.parquet         ← Input for analyzers-baseline
-├── assets.parquet            ← Input for analyzers-baseline
-├── asset_prices.parquet      ← Input for analyzers-baseline
-├── address_labels.parquet    ← Input for analyzers-baseline
-├── ground_truth.parquet      ← For benchmark validation
-└── META.json
-```
 
 ## Pattern Types
 
@@ -287,7 +204,7 @@ Pattern types use lowercase values from `chainswarm_core.constants.PatternTypes`
 
 ## Requirements
 
-- Python >= 3.11 (tested with 3.11, 3.12, 3.13)
+- Python >= 3.13
 - chainswarm-core >= 0.1.13 (provides clickhouse-connect, loguru, pydantic)
 - networkx >= 3.0
 - numpy >= 1.24
