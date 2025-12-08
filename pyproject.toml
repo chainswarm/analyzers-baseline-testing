@@ -13,11 +13,15 @@ authors = [
 ]
 requires-python = ">=3.13"
 classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.13",
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Information Analysis",
 ]
+keywords = ["blockchain", "analytics", "pattern-detection", "aml", "fraud-detection", "chainswarm"]
 dependencies = [
     # Core - provides clickhouse-connect, loguru, pydantic
     "chainswarm-core>=0.1.13",
@@ -37,11 +41,11 @@ dependencies = [
     "click>=8.0",
 ]
 
-[project.optional-dependencies]
-dev = [
-    "pytest>=7.0",
-    "pytest-asyncio>=0.21",
-]
+[project.urls]
+Homepage = "https://github.com/chainswarm/analyzers-baseline"
+Repository = "https://github.com/chainswarm/analyzers-baseline"
+Documentation = "https://github.com/chainswarm/analyzers-baseline#readme"
+Changelog = "https://github.com/chainswarm/analyzers-baseline/blob/main/CHANGELOG.md"
 
 [project.scripts]
 run-pipeline = "analyzers_baseline.scripts.run_pipeline:main"
@@ -50,3 +54,6 @@ run-patterns = "analyzers_baseline.scripts.run_patterns:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+analyzers_baseline = ["config/defaults/*.json"]
