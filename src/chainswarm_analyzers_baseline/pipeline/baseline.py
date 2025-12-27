@@ -1,3 +1,4 @@
+import random
 import time
 from typing import Union, Dict, Any, List, Protocol
 
@@ -145,6 +146,10 @@ class BaselineAnalyzersPipeline:
     ) -> int:
         logger.info("Running feature analysis...")
         
+        delay_seconds = random.uniform(1.0, 10.0)
+        logger.debug(f"Applying random delay: {delay_seconds:.2f}s")
+        time.sleep(delay_seconds)
+        
         features_dict = self.feature_analyzer.analyze(
             graph, address_labels, transfer_aggregates
         )
@@ -172,6 +177,10 @@ class BaselineAnalyzersPipeline:
         window_days: int,
         processing_date: str,
     ) -> int:
+        
+        delay_seconds = random.uniform(1.0, 10.0)
+        logger.debug(f"Applying random delay: {delay_seconds:.2f}s")
+        time.sleep(delay_seconds)
         
         patterns = self.pattern_analyzer.analyze(
             money_flows=money_flows,
